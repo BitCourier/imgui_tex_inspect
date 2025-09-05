@@ -268,13 +268,17 @@ struct BufferDesc
 /* We use this struct for annotations rather than the Inspector struct so that
  * the whole Inspector struct doesn't have to be exposed in this header.
  */
-struct AnnotationsDesc
+struct AnnotationsDescLight
 {
-    ImDrawList  *DrawList;
+    ImDrawList* DrawList;
     ImVec2       TexelViewSize;  // How many texels are visible for annotating
-    ImVec2       TexelTopLeft;   // Coordinated in texture space of top left visible texel
-    BufferDesc   Buffer;         // Description of cache texel data
+    ImVec2       TexelTopLeft;   // Coordinated in texture space of top left visible texel    
     Transform2D  TexelsToPixels; // Transform to go from texel space to screen pixel space
+};
+
+struct AnnotationsDesc:AnnotationsDescLight
+{    
+    BufferDesc   Buffer;         // Description of cache texel data    
 };
 
 //-------------------------------------------------------------------------
@@ -282,6 +286,7 @@ struct AnnotationsDesc
 //-------------------------------------------------------------------------
 
 ImVec4 GetTexel(const BufferDesc *bd, int x, int y);
+bool GetAnnotationDescLight(AnnotationsDescLight*, ImU64 maxAnnotatedTexels);
 bool GetAnnotationDesc(AnnotationsDesc *, ImU64 maxAnnotatedTexels);
 
 //-------------------------------------------------------------------------
@@ -301,6 +306,24 @@ void DrawAnnotations(T drawer, ImU64 maxAnnotatedTexels)
                 ImVec4 color = GetTexel(&ad.Buffer, tx, ty);
                 ImVec2 center = {(float)tx + 0.5f, (float)ty + 0.5f};
                 drawer.DrawAnnotation(ad.DrawList, center, ad.TexelsToPixels, color);
+            }
+        }
+    }
+}
+
+template <typename T>
+void DrawAnnotationsLight(T drawer, ImU64 maxAnnotatedTexels)
+{
+    AnnotationsDescLight ad;
+    if (GetAnnotationDescLight(&ad, maxAnnotatedTexels))
+    {
+        ImVec2 texelBottomRight = ImVec2(ad.TexelTopLeft.x + ad.TexelViewSize.x, ad.TexelTopLeft.y + ad.TexelViewSize.y);
+        for (int ty = (int)ad.TexelTopLeft.y; ty < (int)texelBottomRight.y; ++ty)
+        {
+            for (int tx = (int)ad.TexelTopLeft.x; tx < (int)texelBottomRight.x; ++tx)
+            {                
+                ImVec2 center = { (float)tx + 0.5f, (float)ty + 0.5f };
+                drawer.DrawAnnotation(ad.DrawList, center, ad.TexelsToPixels);
             }
         }
     }

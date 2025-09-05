@@ -22,7 +22,10 @@ namespace ImGuiTexInspect
 //-------------------------------------------------------------------------
 void UpdateShaderOptions(Inspector *inspector);
 void InspectorDrawCallback(const ImDrawList *parent_list, const ImDrawCmd *cmd);
-bool GetVisibleTexelRegionAndGetData(Inspector *inspector, ImVec2 &texelTL, ImVec2 &texelBR);
+bool GetVisibleTexelRegion(Inspector* inspector, ImVec2& texelTL, ImVec2& texelBR);
+bool GetVisibleTexelData(Inspector *inspector, const ImVec2 &texelTL, const ImVec2 &texelBR);
+bool GetVisibleTexelRegionAndGetData(Inspector* inspector, ImVec2& texelTL, ImVec2& texelBR);
+
 
 //-------------------------------------------------------------------------
 // [SECTION] GLOBAL STATE
@@ -892,14 +895,14 @@ Transform2D GetTexelsToPixels(ImVec2 screenTopLeft, ImVec2 screenViewSize, ImVec
     return transform;
 }
 
-/* Fills in the AnnotationsDesc structure which provides all necessary 
- * information for code which draw annoations.  Returns false if no annoations 
+/* Fills in the AnnotationsDescLight structure which provides all necessary
+ * information for code which draw annoations except texture data.  Returns false if no annoations
  * should be drawn.  The maxAnnotatedTexels argument provides a way to override
  * the default maxAnnotatedTexels.
  */
-bool GetAnnotationDesc(AnnotationsDesc *ad, ImU64 maxAnnotatedTexels)
+bool GetAnnotationDescLight(AnnotationsDescLight* ad, ImU64 maxAnnotatedTexels)
 {
-    Inspector *inspector = GContext->CurrentInspector;
+    Inspector* inspector = GContext->CurrentInspector;
 
     if (maxAnnotatedTexels == 0)
     {
@@ -907,10 +910,10 @@ bool GetAnnotationDesc(AnnotationsDesc *ad, ImU64 maxAnnotatedTexels)
     }
     if (maxAnnotatedTexels != 0)
     {
-        /* Check if we would draw too many annotations.  This is to avoid poor 
-         * frame rate when too zoomed out.  Increase MaxAnnotatedTexels if you 
-         * want to draw more annotations.  Note that we don't use texelTL & 
-         * texelBR to get total visible texels as this would cause flickering 
+        /* Check if we would draw too many annotations.  This is to avoid poor
+         * frame rate when too zoomed out.  Increase MaxAnnotatedTexels if you
+         * want to draw more annotations.  Note that we don't use texelTL &
+         * texelBR to get total visible texels as this would cause flickering
          * while panning as the exact number of visible texels changes.
         */
 
@@ -926,9 +929,8 @@ bool GetAnnotationDesc(AnnotationsDesc *ad, ImU64 maxAnnotatedTexels)
     ImVec2 texelTL;
     ImVec2 texelBR;
 
-    if (GetVisibleTexelRegionAndGetData(inspector, texelTL, texelBR))
+    if (GetVisibleTexelRegion(inspector, texelTL, texelBR))
     {
-        ad->Buffer= inspector->Buffer;
         ad->DrawList = ImGui::GetWindowDrawList();
         ad->TexelsToPixels = inspector->TexelsToPixels;
         ad->TexelTopLeft = texelTL;
@@ -939,11 +941,31 @@ bool GetAnnotationDesc(AnnotationsDesc *ad, ImU64 maxAnnotatedTexels)
     return false;
 }
 
-/* Calculates currently visible region of texture (which is returned in texelTL 
- * and texelBR) then also actually ensure that that data is in memory. Returns 
- * false if fetching data failed.
+/* Fills in the AnnotationsDesc structure which provides all necessary 
+ * information for code which draw annoations.  Returns false if no annoations 
+ * should be drawn.  The maxAnnotatedTexels argument provides a way to override
+ * the default maxAnnotatedTexels.
  */
-bool GetVisibleTexelRegionAndGetData(Inspector *inspector, ImVec2 &texelTL, ImVec2 &texelBR)
+bool GetAnnotationDesc(AnnotationsDesc *ad, ImU64 maxAnnotatedTexels)
+{
+    Inspector *inspector = GContext->CurrentInspector;
+
+    if (GetAnnotationDescLight(ad, maxAnnotatedTexels))
+    {        
+        if (GetVisibleTexelData(inspector, ad->TexelTopLeft, ad->TexelTopLeft+ad->TexelViewSize))
+        {
+            ad->Buffer = inspector->Buffer;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/* Calculates currently visible region of texture (which is returned in texelTL
+ * and texelBR).
+ */
+bool GetVisibleTexelRegion(Inspector* inspector, ImVec2& texelTL, ImVec2& texelBR)
 {
     /* Figure out which texels correspond to the top left and bottom right
      * corners of the texture view.  The plus + ImVec2(1,1) is because we
@@ -961,13 +983,21 @@ bool GetVisibleTexelRegionAndGetData(Inspector *inspector, ImVec2 &texelTL, ImVe
         ImSwap(texelTL.y, texelBR.y);
     }
 
-    /* Add ImVec2(1,1) because we want to draw partially visible texels on the 
+    /* Add ImVec2(1,1) because we want to draw partially visible texels on the
      * bottom and right edges.*/
-    texelBR += ImVec2(1,1);
+    texelBR += ImVec2(1, 1);
 
     texelTL = ImClamp(texelTL, ImVec2(0, 0), inspector->TextureSize);
     texelBR = ImClamp(texelBR, ImVec2(0, 0), inspector->TextureSize);
 
+    return true;
+}
+
+/* Ensure that the visible texel data is in memory. Returns 
+ * false if fetching data failed.
+ */
+bool GetVisibleTexelData(Inspector *inspector, const ImVec2 &texelTL, const ImVec2 &texelBR)
+{
     if (inspector->HaveCurrentTexelData)
     {
         return true;
@@ -985,6 +1015,20 @@ bool GetVisibleTexelRegionAndGetData(Inspector *inspector, ImVec2 &texelTL, ImVe
             inspector->HaveCurrentTexelData = true;
             return true;
         }
+    }
+    return false;
+}
+
+/* Fills in the AnnotationsDesc structure which provides all necessary
+* information for code which draw annoations.  Returns false if no annoations
+* should be drawn.  The maxAnnotatedTexels argument provides a way to override
+* the default maxAnnotatedTexels.
+*/
+bool GetVisibleTexelRegionAndGetData(Inspector* inspector, ImVec2& texelTL, ImVec2& texelBR)
+{
+    if (GetVisibleTexelRegion(inspector, texelTL, texelBR))
+    {
+        return GetVisibleTexelData(inspector, texelTL, texelBR);
     }
     return false;
 }

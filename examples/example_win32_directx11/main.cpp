@@ -240,7 +240,7 @@ Texture LoadTexture(const char * path)
     {
         fprintf(stderr, "%s\n", stbi_failure_reason());
         fprintf(stderr, "Failed to open\n");
-        return {nullptr,{0,0}};
+        return {0,{0,0}};
     }
 
     D3D11_TEXTURE2D_DESC desc;
@@ -278,7 +278,7 @@ Texture LoadTexture(const char * path)
     pTexture->Release();
 
     Texture t;
-    t.texture = (void*)textureView;
+    t.texture = (ImTextureID)textureView;
     t.size    = ImVec2((float)width, (float)height);
 
     stbi_image_free(image);
