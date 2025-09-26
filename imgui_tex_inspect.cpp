@@ -23,6 +23,7 @@ namespace ImGuiTexInspect
 void UpdateShaderOptions(Inspector *inspector);
 void InspectorDrawCallback(const ImDrawList *parent_list, const ImDrawCmd *cmd);
 bool GetVisibleTexelRegion(Inspector* inspector, ImVec2& texelTL, ImVec2& texelBR);
+bool GetMousePosition(Inspector* inspector, ImVec2& mouseUV, ImVec2& mousePosTexel, ImVec2& mousePos);
 bool GetVisibleTexelData(Inspector *inspector, const ImVec2 &texelTL, const ImVec2 &texelBR);
 bool GetVisibleTexelRegionAndGetData(Inspector* inspector, ImVec2& texelTL, ImVec2& texelBR);
 
@@ -935,11 +936,16 @@ bool GetAnnotationDescLight(AnnotationsDescLight* ad, ImU64 maxAnnotatedTexels)
         ad->TexelsToPixels = inspector->TexelsToPixels;
         ad->TexelTopLeft = texelTL;
         ad->TexelViewSize = texelBR - texelTL;
-        return true;
+        if (GetMousePosition(inspector, ad->mouseUV, ad->mousePosTexel, ad->mousePos))
+        {
+            return true;
+        }        
     }
 
     return false;
 }
+
+
 
 /* Fills in the AnnotationsDesc structure which provides all necessary 
  * information for code which draw annoations.  Returns false if no annoations 
@@ -960,6 +966,17 @@ bool GetAnnotationDesc(AnnotationsDesc *ad, ImU64 maxAnnotatedTexels)
     }
 
     return false;
+}
+
+bool GetMousePosition(Inspector* inspector, ImVec2& mouseUV, ImVec2& mousePosTexel, ImVec2& mousePos)
+{
+    mousePos = ImGui::GetMousePos();
+    mousePosTexel = inspector->PixelsToTexels * mousePos;
+    auto textureSize = inspector->TextureSize;
+    mouseUV = mousePosTexel / textureSize;
+    mousePosTexel.x = Modulus(mousePosTexel.x, textureSize.x);
+    mousePosTexel.y = Modulus(mousePosTexel.y, textureSize.y);
+    return true;
 }
 
 /* Calculates currently visible region of texture (which is returned in texelTL

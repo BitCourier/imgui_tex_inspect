@@ -274,6 +274,9 @@ struct AnnotationsDescLight
     ImVec2       TexelViewSize;  // How many texels are visible for annotating
     ImVec2       TexelTopLeft;   // Coordinated in texture space of top left visible texel    
     Transform2D  TexelsToPixels; // Transform to go from texel space to screen pixel space
+    ImVec2 mouseUV; //The mouse UV coordinates on the texture
+    ImVec2 mousePosTexel; //The mouse Texel coordinates on the texture
+    ImVec2 mousePos; //The mouse coordinates on screen
 };
 
 struct AnnotationsDesc:AnnotationsDescLight
@@ -311,6 +314,7 @@ void DrawAnnotations(T drawer, ImU64 maxAnnotatedTexels)
     }
 }
 
+
 template <typename T>
 void DrawAnnotationsLight(T drawer, ImU64 maxAnnotatedTexels)
 {
@@ -326,6 +330,27 @@ void DrawAnnotationsLight(T drawer, ImU64 maxAnnotatedTexels)
                 drawer.DrawAnnotation(ad.DrawList, center, ad.TexelsToPixels);
             }
         }
+    }
+}
+
+template <typename T>
+void DrawFullRoiAnnotaionLight(T drawer)
+{
+    AnnotationsDescLight ad;
+    if (GetAnnotationDescLight(&ad, INT32_MAX))
+    {
+        ImVec2 texelBottomRight = ImVec2(ad.TexelTopLeft.x + ad.TexelViewSize.x, ad.TexelTopLeft.y + ad.TexelViewSize.y);
+        drawer.DrawAnnotation(ad.DrawList, ad.TexelsToPixels, ad.TexelTopLeft, texelBottomRight);
+    }
+}
+
+template <typename T>
+void DrawMouseAnnotaionLight(T drawer)
+{
+    AnnotationsDescLight ad;
+    if (GetAnnotationDescLight(&ad, INT32_MAX))
+    {
+        drawer.DrawAnnotation(ad.DrawList, ad.TexelsToPixels, ad.mouseUV, ad.mousePosTexel, ad.mousePos);
     }
 }
 } // namespace ImGuiTexInspect
