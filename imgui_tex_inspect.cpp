@@ -143,6 +143,8 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
     Inspector *inspector = ctx->CurrentInspector;
     justCreated |= !inspector->Initialized;
 
+    justCreated |= HasFlag(flags, InspectorFlags_GrillOptions);
+
     // Cache the basics
     inspector->ID = ID;
     inspector->Texture = texture;

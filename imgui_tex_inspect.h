@@ -41,6 +41,7 @@ enum InspectorFlags_
     InspectorFlags_NoAutoReadTexture    = 1 << 6,  // By default texture data is read to CPU every frame for tooltip and annotations
     InspectorFlags_FlipX                = 1 << 7,  // Horizontally flip the way the texture is displayed
     InspectorFlags_FlipY                = 1 << 8,  // Vertically flip the way the texture is displayed
+    InspectorFlags_ResetZoom            = 1 << 9  // Reset current Zoom
 };
 
 /* Use one of these Size structs if you want to specify an exact size for the inspector panel. 
@@ -53,6 +54,9 @@ enum InspectorFlags_
  */
 struct SizeIncludingBorder {ImVec2 Size; SizeIncludingBorder(ImVec2 size):Size(size){}};
 struct SizeExcludingBorder {ImVec2 size; SizeExcludingBorder(ImVec2 size):size(size){}};
+
+void SetNextPanelFlags(InspectorFlags setFlags, InspectorFlags clearFlags);
+
 /* BeginInspectorPanel
  * Returns true if panel is drawn.  Note that flags will only be considered on the first call */
 bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags = 0);
