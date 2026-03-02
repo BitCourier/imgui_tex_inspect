@@ -55,8 +55,6 @@ enum InspectorFlags_
 struct SizeIncludingBorder {ImVec2 Size; SizeIncludingBorder(ImVec2 size):Size(size){}};
 struct SizeExcludingBorder {ImVec2 size; SizeExcludingBorder(ImVec2 size):size(size){}};
 
-void SetNextPanelFlags(InspectorFlags setFlags, InspectorFlags clearFlags);
-
 /* BeginInspectorPanel
  * Returns true if panel is drawn.  Note that flags will only be considered on the first call */
 bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags = 0);

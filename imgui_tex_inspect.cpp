@@ -217,7 +217,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
     ImVec2 drawImageOffset{borderWidth, borderWidth};
     ImVec2 viewSize = availablePanelSize;
 
-     if ((inspector->Flags & InspectorFlags_ShowWrap) == 0)
+    if ((inspector->Flags & InspectorFlags_ShowWrap) == 0)
     {
         /* Don't crop the texture to UV [0,1] range.  What you see outside this 
          * range will depend on API and texture properties */
