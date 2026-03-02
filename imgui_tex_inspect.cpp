@@ -5,6 +5,9 @@
 //-------------------------------------------------------------------------
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_tex_inspect.h"
+
+#include <cmath>
+
 #include "imgui_tex_inspect_internal.h"
 
 #include "imgui.h"
@@ -13,6 +16,8 @@
 #if defined(_MSC_VER)
 #pragma warning(disable : 4996) // 'sprintf' considered unsafe
 #endif
+
+#define EPS 5e-5
 
 namespace ImGuiTexInspect
 {
@@ -172,8 +177,8 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
     // A size value of zero indicates we should use defaults
     if (justCreated)
     {
-        panelSize = {size.x == 0 ? ImMax(ctx->DefaultInitialPanelWidth, contentRegionAvail.x) : size.x,
-                     size.y == 0 ? ctx->DefaultPanelHeight : size.y};
+        panelSize = {std::abs(size.x) < EPS ? ImMax(ctx->DefaultInitialPanelWidth, contentRegionAvail.x) : size.x,
+                     std::abs(size.y) < EPS ? ctx->DefaultPanelHeight : size.y};
     }
     else
     {
@@ -200,7 +205,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
             newScale = 1;
         }
 
-        if (newScale != -1)
+        if (std::abs(newScale - -1) > EPS)
         {
             inspector->Scale = ImVec2(newScale, newScale);
             SetPanPos(inspector, ImVec2(0.5f, 0.5f));
@@ -334,7 +339,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
         }
 
         // ZOOM
-        if (hovered && IO.MouseWheel != 0)
+        if (hovered && std::abs(IO.MouseWheel) > EPS)
         {
             float zoomRate  = ctx->ZoomRate;
             float scale     = inspector->Scale.y;
@@ -388,8 +393,8 @@ bool BeginInspectorPanel(const char *name, ImTextureID texture, ImVec2 textureSi
 {
     // Correct the size to include the border, but preserve 0 which has a special meaning
     return BeginInspectorPanel(name, texture, textureSize, flags,
-                               SizeIncludingBorder{ImVec2{size.size.x == 0 ? 0 : size.size.x + 2, 
-                                                          size.size.y == 0 ? 0 : size.size.y + 2}});
+                               SizeIncludingBorder{ImVec2{std::abs(size.size.x) < EPS ? 0 : size.size.x + 2,
+                                                          std::abs(size.size.y) < EPS ? 0 : size.size.y + 2}});
 }
 
 void EndInspectorPanel()
@@ -1200,7 +1205,6 @@ Arrow &Arrow::UsePreset(Preset preset)
 {
     switch (preset)
     {
-        default:
         case Preset::NormalMap:
             VectorIndex_x = 0;
             VectorIndex_y = 1;
@@ -1212,6 +1216,12 @@ Arrow &Arrow::UsePreset(Preset preset)
             VectorIndex_y = 1;
             LineScale = ImVec2(0.5f, -0.5f);
             ZeroPoint = ImVec2(0, 0);
+            break;
+        default:
+            VectorIndex_x = 0;
+            VectorIndex_y = 1;
+            LineScale = ImVec2(1, -1);
+            ZeroPoint = ImVec2(128.0f / 255, 128.0f / 255);
             break;
     }
     return *this;
@@ -1243,3 +1253,5 @@ void DrawAnnotationLine(ImDrawList *drawList, ImVec2 fromTexel, ImVec2 toTexel, 
     drawList->AddLine(lineFrom, lineTo, color, 1.0f);
 }
 } // namespace ImGuiTexInspect
+
+#undef EPS
