@@ -217,7 +217,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
     ImVec2 drawImageOffset{borderWidth, borderWidth};
     ImVec2 viewSize = availablePanelSize;
 
-    if ((inspector->Flags & InspectorFlags_ShowWrap) == 0)
+     if ((inspector->Flags & InspectorFlags_ShowWrap) == 0)
     {
         /* Don't crop the texture to UV [0,1] range.  What you see outside this 
          * range will depend on API and texture properties */
@@ -241,7 +241,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
             viewSizeUV.y = 1;
             inspector->PanPos.y = 0.5;
         }
-    }
+    } 
 
     if (HasFlag(flags,InspectorFlags_FlipX))
     {
@@ -318,8 +318,8 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
             {
                 inspector->IsDragging = true;
             }
-            // carry on dragging
-            else if (inspector->IsDragging)
+            // carry on dragging, we need to check if we're hovered to enable multiple inspectors with same ID (For synced Zooming, etc.)
+            else if (inspector->IsDragging && hovered)
             {
                 ImVec2 uvDelta = IO.MouseDelta * viewSizeUV / viewSize;
                 inspector->PanPos -= uvDelta;
