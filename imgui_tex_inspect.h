@@ -1,6 +1,9 @@
 // ImGuiTexInspect, a texture inspector widget for dear imgui
 
 #pragma once
+#include <functional>
+#include <optional>
+
 #include "imgui.h"
 
 namespace ImGuiTexInspect
@@ -57,9 +60,9 @@ struct SizeExcludingBorder {ImVec2 size; SizeExcludingBorder(ImVec2 size):size(s
 
 /* BeginInspectorPanel
  * Returns true if panel is drawn.  Note that flags will only be considered on the first call */
-bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags = 0);
-bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags, SizeIncludingBorder size);
-bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags, SizeExcludingBorder size);
+bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags = 0, std::optional<std::function<bool(ImVec2, ImVec2, ImVec2)>> = std::nullopt);
+bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags, SizeIncludingBorder size, std::optional<std::function<bool(ImVec2, ImVec2, ImVec2)>> = std::nullopt);
+bool BeginInspectorPanel(const char *name, ImTextureID, ImVec2 textureSize, InspectorFlags flags, SizeExcludingBorder size, std::optional<std::function<bool(ImVec2, ImVec2, ImVec2)>> = std::nullopt);
 
 /* EndInspectorPanel 
  * Always call after BeginInspectorPanel and after you have drawn any required annotations*/

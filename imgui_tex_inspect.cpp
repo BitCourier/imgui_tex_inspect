@@ -7,6 +7,7 @@
 #include "imgui_tex_inspect.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "imgui_tex_inspect_internal.h"
 
@@ -129,7 +130,7 @@ void SetNextPanelFlags(InspectorFlags setFlags, InspectorFlags clearFlags)
 }
 
 bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureSize, InspectorFlags flags,
-                         SizeIncludingBorder sizeIncludingBorder)
+                         SizeIncludingBorder sizeIncludingBorder, std::optional<std::function<bool(ImVec2, ImVec2, ImVec2)>> renderFunction)
 {
     const int borderWidth = 1;
     // Unpack size param.  It's in the SizeIncludingBorder structure just to make sure users know what they're requesting
@@ -151,8 +152,8 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
     justCreated |= HasFlag(flags, InspectorFlags_ResetZoom);
 
     // Cache the basics
-    inspector->ID = ID;
-    inspector->Texture = texture;
+    inspector->ID = ID; //TODO: Here we need to set the Texture ID to non existent
+    inspector->Texture = 66666666;
     inspector->TextureSize = textureSize;
     inspector->Initialized = true;
 
@@ -185,14 +186,28 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
         panelSize = {size.x == 0 ? contentRegionAvail.x : size.x, size.y == 0 ? ctx->DefaultPanelHeight : size.y};
     }
 
+    //Update min scale for huge images
+    auto psMin = std::max(1.0f, 
+        std::min(panelSize.x, panelSize.y));
+    auto texMax = std::max(1.0f, 
+        std::max(textureSize.x, textureSize.y));
+    auto minScale =  psMin/ texMax;
+    inspector->ScaleMin = ImVec2(std::min(minScale, inspector->ScaleMin.x), std::min(minScale, inspector->ScaleMin.y));
+
     inspector->PanelSize = panelSize;
     ImVec2 availablePanelSize = panelSize - ImVec2(borderWidth, borderWidth) * 2;
 
     {
         // Possibly update scale
         float newScale = -1;
-
-        if (HasFlag(newlySetFlags, InspectorFlags_FillVertical))
+        if (HasFlag(newlySetFlags, InspectorFlags_FillVertical) &&
+            HasFlag(newlySetFlags, InspectorFlags_FillHorizontal))
+        {
+            auto newScaleY = availablePanelSize.y / textureSize.y;
+            auto newScaleX = availablePanelSize.x / textureSize.x;
+            newScale = std::min(newScaleX, newScaleY);
+        }
+    	else if (HasFlag(newlySetFlags, InspectorFlags_FillVertical))
         {
             newScale = availablePanelSize.y / textureSize.y;
         }
@@ -202,7 +217,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
         }
         else if (justCreated)
         {
-            newScale = 1;
+            newScale = 1.0f;
         }
 
         if (std::abs(newScale - -1) > EPS)
@@ -283,7 +298,17 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
 
         UpdateShaderOptions(inspector);
         inspector->CachedShaderOptions = inspector->ActiveShaderOptions;
-        ImGui::Image(texture, viewSize, uv0, uv1);
+
+        if (!renderFunction.has_value())
+        {
+			ImGui::Image(texture, viewSize, uv0, uv1);
+        }
+        else
+        {
+            renderFunction.value()(viewSize, uv0, uv1);
+        }
+
+
         ImGui::GetWindowDrawList()->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
         /* Matrices for going back and forth between texel coordinates in the 
@@ -314,7 +339,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
             }
         }
 
-        bool hovered = ImGui::IsWindowHovered();
+        bool hovered = ImGui::IsItemHovered();
 
         {  //DRAGGING
             
@@ -384,17 +409,18 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
     }
 }
 
-bool BeginInspectorPanel(const char *name, ImTextureID texture, ImVec2 textureSize, InspectorFlags flags)
+bool BeginInspectorPanel(const char *name, ImTextureID texture, ImVec2 textureSize, InspectorFlags flags, std::optional<std::function<bool(ImVec2, ImVec2, ImVec2)>> renderFunction)
 {
-    return BeginInspectorPanel(name, texture, textureSize, flags, SizeIncludingBorder{{0, 0}});
+    return BeginInspectorPanel(name, texture, textureSize, flags, SizeIncludingBorder{{0, 0}}, renderFunction);
 }
 
-bool BeginInspectorPanel(const char *name, ImTextureID texture, ImVec2 textureSize, InspectorFlags flags, SizeExcludingBorder size)
+bool BeginInspectorPanel(const char *name, ImTextureID texture, ImVec2 textureSize, InspectorFlags flags, SizeExcludingBorder size, std::optional<std::function<bool(ImVec2, ImVec2, ImVec2)>> renderFunction)
 {
     // Correct the size to include the border, but preserve 0 which has a special meaning
     return BeginInspectorPanel(name, texture, textureSize, flags,
                                SizeIncludingBorder{ImVec2{std::abs(size.size.x) < EPS ? 0 : size.size.x + 2,
-                                                          std::abs(size.size.y) < EPS ? 0 : size.size.y + 2}});
+                                                          std::abs(size.size.y) < EPS ? 0 : size.size.y + 2}},
+																								renderFunction);
 }
 
 void EndInspectorPanel()
