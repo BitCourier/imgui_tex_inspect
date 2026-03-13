@@ -235,7 +235,7 @@ static void ImGui_ImplOpenGL3_SetupRenderState(ImDrawData* draw_data, int fb_wid
     if (g_GlVersion >= 310)
         glDisable(GL_PRIMITIVE_RESTART);
 #endif
-#ifdef GL_POLYGON_MODE
+#ifdef IMGUI_IMPL_OPENGL_MAY_HAVE_POLYGON_MODE
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 
