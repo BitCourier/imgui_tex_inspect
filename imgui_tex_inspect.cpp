@@ -153,7 +153,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
 
     // Cache the basics
     inspector->ID = ID; //TODO: Here we need to set the Texture ID to non existent
-    inspector->Texture = 66666666;
+    inspector->Texture = texture;
     inspector->TextureSize = textureSize;
     inspector->Initialized = true;
 
