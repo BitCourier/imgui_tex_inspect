@@ -339,7 +339,7 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
             }
         }
 
-        bool hovered = ImGui::IsItemHovered();
+        bool hovered = ImGui::IsWindowHovered();
 
         {  //DRAGGING
             

@@ -342,7 +342,7 @@ template <typename T>
 void DrawFullRoiAnnotaionLight(T drawer)
 {
     AnnotationsDescLight ad;
-    if (GetAnnotationDescLight(&ad, INT32_MAX))
+    if (GetAnnotationDescLight(&ad, INT64_MAX))
     {
         ImVec2 texelBottomRight = ImVec2(ad.TexelTopLeft.x + ad.TexelViewSize.x, ad.TexelTopLeft.y + ad.TexelViewSize.y);
         drawer.DrawAnnotation(ad.DrawList, ad.TexelsToPixels, ad.TexelTopLeft, texelBottomRight);
@@ -353,7 +353,7 @@ template <typename T>
 void DrawMouseAnnotaionLight(T drawer)
 {
     AnnotationsDescLight ad;
-    if (GetAnnotationDescLight(&ad, INT32_MAX))
+    if (GetAnnotationDescLight(&ad, INT64_MAX))
     {
         drawer.DrawAnnotation(ad.DrawList, ad.TexelsToPixels, ad.mouseUV, ad.mousePosTexel, ad.mousePos);
     }
