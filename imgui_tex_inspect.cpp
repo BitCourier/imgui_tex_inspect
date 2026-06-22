@@ -305,7 +305,12 @@ bool BeginInspectorPanel(const char *title, ImTextureID texture, ImVec2 textureS
         }
         else
         {
-            renderFunction.value()(viewSize, uv0, uv1);
+            auto pos = ImGui::GetCursorScreenPos();
+            if (!renderFunction.value()(viewSize, uv0, uv1)) //Draw a dummy if render function failed.
+            {
+                ImGui::SetCursorScreenPos(pos);
+                ImGui::Dummy(viewSize);
+            }
         }
 
 
